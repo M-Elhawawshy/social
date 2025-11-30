@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS comments (
+    id UUID PRIMARY KEY,
+    content TEXT NOT NULL,
+    post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

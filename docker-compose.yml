@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+#  api:
+#    build:
+#      context: .
+#    ports:
+#      - "8080:80"
+#    environment:
+#      - ADDR=:80
+#      - DATABASE_URL=postgres://social_user:social_password@database:5432/social?sslmode=disable
+#    depends_on:
+#      - database
+  database:
+    image: postgres:17
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: social
+      POSTGRES_USER: social_user
+      POSTGRES_PASSWORD: social_password
+
+    volumes:
+      - social_db:/var/lib/postgresql/data
+
+volumes:
+  social_db:
