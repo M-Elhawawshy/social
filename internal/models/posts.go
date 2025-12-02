@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ type PostsInterface interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*Post, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 	Update(ctx context.Context, post *Post) error
-	Feed(ctx context.Context, userID uuid.UUID) ([]FeedPost, error)
+	Feed(ctx context.Context, userID uuid.UUID, pg PaginatedFeedQuery) ([]FeedPost, error)
 }
 
 type Post struct {
@@ -31,9 +32,9 @@ type Post struct {
 
 type FeedPost struct {
 	Post
-	CommentsCount     int       `json:"comments_count"`
-	TopCommentContent string    `json:"top_comment_content"`
-	TopCommentUserID  uuid.UUID `json:"top_comment_user_id"`
+	CommentsCount     int        `json:"comments_count"`
+	TopCommentContent *string    `json:"top_comment_content"`
+	TopCommentUserID  *uuid.UUID `json:"top_comment_user_id"`
 }
 
 type PostsModel struct {
@@ -88,7 +89,29 @@ func (p *PostsModel) Update(ctx context.Context, post *Post) error {
 	return err
 }
 
-func (p *PostsModel) Feed(ctx context.Context, userID uuid.UUID) ([]FeedPost, error) {
+func (p *PostsModel) Feed(ctx context.Context, userID uuid.UUID, pg PaginatedFeedQuery) ([]FeedPost, error) {
+	extraWhereArguments := ""
+	args := []interface{}{userID, pg.Limit, pg.Offset}
+	argID := 4
+
+	if pg.Search != "" {
+		extraWhereArguments += fmt.Sprintf("AND (p.title ILIKE $%d OR p.content ILIKE $%d)", argID, argID+1)
+		args = append(args, "%"+pg.Search+"%", "%"+pg.Search+"%")
+		argID += 2
+	}
+
+	if pg.Tags != nil {
+		extraWhereArguments += fmt.Sprintf("AND p.tags @> $%d", argID)
+		args = append(args, pg.Tags)
+		argID++
+	}
+
+	if !pg.From.IsZero() && !pg.To.IsZero() {
+		extraWhereArguments += fmt.Sprintf("AND p.created_at BETWEEN $%d AND $%d", argID, argID+1)
+		args = append(args, pg.From, pg.To)
+		argID += 2
+	}
+
 	statement := `
 		SELECT p.id, p.title, p.content, p.user_id, p.tags, p.created_at,
        (SELECT COUNT(*) FROM comments WHERE post_id = p.id) AS comments_count,
@@ -97,14 +120,14 @@ func (p *PostsModel) Feed(ctx context.Context, userID uuid.UUID) ([]FeedPost, er
        (SELECT user_id FROM comments WHERE post_id = p.id ORDER BY created_at DESC LIMIT 1) AS top_comment_user_id
 		FROM posts p
 		JOIN users u ON p.user_id = u.id
-		WHERE p.user_id = $1 OR p.user_id IN (SELECT user_id from followers WHERE follower_id = $1)
-		ORDER BY p.created_at DESC
-		LIMIT 50 offset 0;
+		WHERE (p.user_id = $1 OR p.user_id IN (SELECT user_id from followers WHERE follower_id = $1)) ` + extraWhereArguments + `
+		ORDER BY p.created_at ` + pg.Sort + `
+		LIMIT $2 offset $3;
 	`
 	ctx, cancel := context.WithTimeout(ctx, maxQueryDuration)
 	defer cancel()
 
-	rows, err := p.pool.Query(ctx, statement, userID)
+	rows, err := p.pool.Query(ctx, statement, args...)
 	if err != nil {
 		return nil, err
 	}
