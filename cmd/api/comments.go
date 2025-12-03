@@ -8,11 +8,30 @@ import (
 	"github.com/google/uuid"
 )
 
+// commentPayload represents the payload to create a comment
+// swagger:model commentPayload
 type commentPayload struct {
-	Content string    `json:"content" validate:"required,max=1000"`
-	PostID  uuid.UUID `json:"-" validate:"required,uuid"`
+	// Content of the comment
+	// example: Nice post!
+	Content string `json:"content" validate:"required,max=1000" example:"Nice post!"`
+	// PostID is injected from path and validated internally
+	PostID uuid.UUID `json:"-" validate:"required,uuid"`
 }
 
+// createCommentHandler godoc
+//
+//	@Summary		Create a comment for a post
+//	@Description	Creates a new comment associated with the specified post
+//	@Tags			Comments
+//	@Accept			json
+//	@Produce		json
+//	@Param			postID	path		string			true	"Post ID (UUID)"
+//	@Param			request	body		commentPayload	true	"Comment payload"
+//	@Success		201		{object}	DataResponseComment
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/posts/{postID}/comments [post]
 func (app *application) createCommentHandler(w http.ResponseWriter, r *http.Request) {
 	cp := commentPayload{}
 	if err := readJSON(w, r, &cp); err != nil {

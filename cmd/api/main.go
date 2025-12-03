@@ -15,11 +15,30 @@ func init() {
 
 const version = "0.0.1"
 
+//	@title			Social API
+//	@version		1.0
+//	@description	This is a Social API server
+//	@termsOfService	http://swagger.io/terms/
+
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+
+//	@license.name	Apache 2.0
+//	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
+
+//	@BasePath	/v1
+
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description
 func main() {
 	addr := env.GetString("ADDR", ":8080")
 	cfg := config{
-		addr: addr,
-		env:  env.GetString("ENV", "development"),
+		addr:   addr,
+		env:    env.GetString("ENV", "development"),
+		apiURL: env.GetString("EXTERNAL_URL", "localhost:8080"),
 		db: DBConfig{
 			dsn:          env.GetString("DATABASE_URL", ""),
 			maxOpenConns: 30,

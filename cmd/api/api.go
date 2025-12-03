@@ -1,13 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"social/docs"
 	"social/internal/models"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 type application struct {
@@ -16,9 +19,10 @@ type application struct {
 }
 
 type config struct {
-	addr string
-	db   DBConfig
-	env  string
+	addr   string
+	db     DBConfig
+	env    string
+	apiURL string
 }
 
 type DBConfig struct {
@@ -37,6 +41,9 @@ func (app *application) router() http.Handler {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.health)
+
+		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
+		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
 		r.Route("/posts", func(r chi.Router) {
 			r.Post("/", app.createPostHandler)
@@ -72,6 +79,11 @@ func (app *application) router() http.Handler {
 }
 
 func (app *application) run() error {
+
+	docs.SwaggerInfo.Version = version
+	docs.SwaggerInfo.Host = app.config.apiURL
+	docs.SwaggerInfo.BasePath = "/v1"
+
 	server := &http.Server{
 		Addr:         app.config.addr,
 		Handler:      app.router(),

@@ -8,6 +8,17 @@ import (
 	"github.com/google/uuid"
 )
 
+// getUserHandler godoc
+//
+//	@Summary		Get a user
+//	@Description	Retrieves a user by ID
+//	@Tags			Users
+//	@Produce		json
+//	@Param			userID	path		string	true	"User ID (UUID)"
+//	@Success		200		{object}	DataResponseUser
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/users/{userID} [get]
 func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	user := getUserFromContext(r)
 
@@ -16,6 +27,16 @@ func (app *application) getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// followUserHandler godoc
+//
+//	@Summary		Follow a user
+//	@Description	Follow the specified user
+//	@Tags			Users
+//	@Param			userID	path	string	true	"User ID (UUID)"
+//	@Success		204		"No Content"
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/users/{userID}/follow [put]
 func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request) {
 	// follow request -> user_id in request + target_id -> simply insert into db
 	// todo: fetch userID from context when auth is implemented
@@ -40,6 +61,15 @@ func (app *application) followUserHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// unfollowUserHandler godoc
+//
+//	@Summary		Unfollow a user
+//	@Description	Unfollow the specified user
+//	@Tags			Users
+//	@Param			userID	path	string	true	"User ID (UUID)"
+//	@Success		204		"No Content"
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/users/{userID}/unfollow [put]
 func (app *application) unfollowUserHandler(w http.ResponseWriter, r *http.Request) {
 	userID := "b58e1f73-028f-4c17-b8ac-8a3b416c69fd"
 	userUUID := uuid.MustParse(userID)

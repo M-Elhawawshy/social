@@ -7,12 +7,32 @@ import (
 	"github.com/google/uuid"
 )
 
+// postPayload represents the payload to create a post
+// swagger:model postPayload
 type postPayload struct {
-	Title   string   `json:"title" validate:"required,max=100"`
-	Content string   `json:"content" validate:"required,max=1000"`
-	Tags    []string `json:"tags"`
+	// Title of the post
+	// example: My first post
+	Title string `json:"title" validate:"required,max=100" example:"My first post"`
+	// Content of the post
+	// example: Hello world!
+	Content string `json:"content" validate:"required,max=1000" example:"Hello world!"`
+	// Tags associated with the post
+	// example: ["go","backend"]
+	Tags []string `json:"tags" example:"go,backend"`
 }
 
+// createPostHandler godoc
+//
+//	@Summary		Create a post
+//	@Description	Creates a new post
+//	@Tags			Posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		postPayload	true	"Post payload"
+//	@Success		201		{object}	DataResponsePost
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/posts [post]
 func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	var payload postPayload
 	err := readJSON(w, r, &payload)
@@ -53,6 +73,17 @@ func (app *application) createPostHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// getPostHandler godoc
+//
+//	@Summary		Get a post
+//	@Description	Retrieves a post by ID
+//	@Tags			Posts
+//	@Produce		json
+//	@Param			postID	path		string	true	"Post ID (UUID)"
+//	@Success		200		{object}	DataResponsePost
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/posts/{postID} [get]
 func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromContext(r)
 	comments, err := app.models.Comments.GetComments(r.Context(), post.ID)
@@ -67,6 +98,17 @@ func (app *application) getPostHandler(w http.ResponseWriter, r *http.Request) {
 		app.errorServerError(w, r, err)
 	}
 }
+
+// deletePostHandler godoc
+//
+//	@Summary		Delete a post
+//	@Description	Deletes a post by ID
+//	@Tags			Posts
+//	@Param			postID	path	string	true	"Post ID (UUID)"
+//	@Success		204		"No Content"
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/posts/{postID} [delete]
 func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromContext(r)
 	err := app.models.Posts.Delete(r.Context(), post.ID)
@@ -81,12 +123,34 @@ func (app *application) deletePostHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// updatePostPayload represents the payload to update a post
+// swagger:model updatePostPayload
 type updatePostPayload struct {
-	Title   *string  `json:"title" validate:"omitempty,max=100"`
-	Content *string  `json:"content" validate:"omitempty,max=1000"`
-	Tags    []string `json:"tags" validate:"omitempty"`
+	// New title of the post
+	// example: Updated title
+	Title *string `json:"title" validate:"omitempty,max=100" example:"Updated title"`
+	// New content of the post
+	// example: Updated content
+	Content *string `json:"content" validate:"omitempty,max=1000" example:"Updated content"`
+	// New tags of the post
+	// example: ["go","api"]
+	Tags []string `json:"tags" validate:"omitempty" example:"go,api"`
 }
 
+// updatePostHandler godoc
+//
+//	@Summary		Update a post
+//	@Description	Updates a post by ID
+//	@Tags			Posts
+//	@Accept			json
+//	@Produce		json
+//	@Param			postID	path		string				true	"Post ID (UUID)"
+//	@Param			request	body		updatePostPayload	true	"Update payload"
+//	@Success		200		{object}	DataResponsePost
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		404		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/posts/{postID} [patch]
 func (app *application) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 	post := getPostFromContext(r)
 
