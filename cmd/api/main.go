@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"log"
 	"social/internal/env"
 	"social/internal/models"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 )
 
 func init() {
@@ -51,9 +53,16 @@ func main() {
 	defer dbPool.Close()
 
 	dbModels := models.NewModels(dbPool)
+
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	app := &application{
 		config: cfg,
 		models: dbModels,
+		logger: logger.Sugar(),
 	}
 
 	err = app.run()
