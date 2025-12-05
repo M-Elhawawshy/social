@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS user_invites (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    invite_token UUID NOT NULL UNIQUE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    sent_count INT DEFAULT 1,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

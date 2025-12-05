@@ -75,6 +75,11 @@ func (app *application) router() http.Handler {
 				r.Get("/feed", app.getUserFeedHandler)
 			})
 		})
+
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/signup", app.signupHandler)
+			r.Post("/activate/{token}", app.activateHandler)
+		})
 	})
 
 	return r
