@@ -45,6 +45,12 @@ func main() {
 			dsn:          env.GetString("DATABASE_URL", ""),
 			maxOpenConns: 30,
 		},
+		mail: MailConfig{
+			username:      env.GetString("EMAIL_USERNAME", ""),
+			password:      env.GetString("EMAIL_PASSWORD", ""),
+			host:          env.GetString("EMAIL_HOST", ""),
+			smtpServerURL: env.GetString("EMAIL_SMTP_SERVER_URL", ""),
+		},
 	}
 	dbPool, err := openDB(cfg.db)
 	if err != nil {
@@ -59,10 +65,12 @@ func main() {
 		log.Fatal(err)
 	}
 
+	mailer := NewStdMailer(cfg.mail.username, cfg.mail.password, cfg.mail.host, cfg.mail.smtpServerURL)
 	app := &application{
 		config: cfg,
 		models: dbModels,
 		logger: logger.Sugar(),
+		mailer: mailer,
 	}
 
 	err = app.run()

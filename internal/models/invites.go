@@ -14,6 +14,7 @@ const InviteExpirationTime = time.Hour * 12
 type InvitesInterface interface {
 	GetInvite(context.Context, *Invite) error
 	Delete(context.Context, uuid.UUID) error
+	GetInviteFromUserID(context.Context, *Invite) error
 }
 
 type Invite struct {
@@ -39,6 +40,25 @@ func (i *InvitesModel) Delete(ctx context.Context, userID uuid.UUID) error {
 
 	_, err := i.pool.Exec(ctx, statement, userID)
 	return err
+}
+
+func (i *InvitesModel) GetInviteFromUserID(ctx context.Context, invite *Invite) error {
+	statement := `
+		SELECT user_id, invite_token, expires_at, sent_count, created_at, last_seen_at
+		FROM user_invites ui
+		WHERE ui.user_id = $1
+		`
+	ctx, cancel := context.WithTimeout(ctx, maxQueryDuration)
+	defer cancel()
+
+	return i.pool.QueryRow(ctx, statement, invite.UserID).Scan(
+		&invite.UserID,
+		&invite.InviteToken,
+		&invite.ExpiresAt,
+		&invite.SentCount,
+		&invite.CreatedAt,
+		&invite.LastSeenAt,
+	)
 }
 
 func (i *InvitesModel) GetInvite(ctx context.Context, invite *Invite) error {

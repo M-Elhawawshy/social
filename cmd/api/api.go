@@ -18,13 +18,22 @@ type application struct {
 	config config
 	models *models.Models
 	logger *zap.SugaredLogger
+	mailer EmailSender
 }
 
 type config struct {
 	addr   string
 	db     DBConfig
+	mail   MailConfig
 	env    string
 	apiURL string
+}
+
+type MailConfig struct {
+	username      string
+	password      string
+	host          string
+	smtpServerURL string
 }
 
 type DBConfig struct {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"social/internal/models"
 	"time"
@@ -63,8 +64,28 @@ func (app *application) signupHandler(w http.ResponseWriter, r *http.Request) {
 		app.errorServerError(w, r, err)
 		return
 	}
-	// todo: send an email to the user for the invite
-	// ---------------------------------------------
+
+	invite := &models.Invite{}
+	invite.UserID = user.ID
+	err = app.models.Invites.GetInviteFromUserID(ctx, invite)
+	if err != nil {
+		app.logger.Errorln("could not get invite for user:", user.ID)
+	}
+	to := user.Email
+	link := fmt.Sprintf("%s/activate/%s", app.config.apiURL, invite.InviteToken.String())
+	body := fmt.Sprintf(
+		"Hello %s!\n"+
+			"Thank you for registering for Social. Please click the link below to activate your account:\n"+
+			"%s",
+		user.Email,
+		link,
+	)
+	subject := "Activate your Social account"
+	err = app.mailer.SendEmail("Social@Social.com", []string{to}, subject, body)
+	if err != nil {
+		app.logger.Errorln("failed to send an activation email for the user:", user.ID)
+	}
+
 	if err := app.jsonResponse(w, http.StatusCreated, user); err != nil {
 		app.errorServerError(w, r, err)
 		return
